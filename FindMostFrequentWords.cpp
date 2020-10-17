@@ -1,5 +1,7 @@
-// This is a personal academic project.Dear PVS - Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
+// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
+
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 
 #include <iostream>
 #include <windows.h>
@@ -98,12 +100,12 @@ bool ProcessString(char* const textString, const size_t textStringSize, CRITICAL
 			found->second += 1;
 		else
 			map->insert(map->end(), { strWord, 1 });
-	} while (word!=nullptr);
+	} while (true);
 
 	return true;
 }
 
-DWORD WINAPI StringProcessingThread(_In_ LPVOID lpParameter) noexcept
+unsigned __stdcall StringProcessingThread( void* lpParameter)
 {
 	auto threadParam = static_cast<PTHREAD_PARAMETERS>(lpParameter);
 	size_t length = 0;
@@ -115,7 +117,7 @@ DWORD WINAPI StringProcessingThread(_In_ LPVOID lpParameter) noexcept
 			break;
 
 		ProcessString(str, length, threadParam->cs, threadParam->words);
-	} while (str != nullptr);
+	} while (true);
 	return 0;
 }
 
@@ -125,7 +127,7 @@ Comparator compFunctor = [](std::pair<std::string, int> elem1, std::pair<std::st
 	return elem1.second > elem2.second;
 };
 
-void PrintPopularWords(std::map<std::string, unsigned int>& map, const unsigned int wordsCount) noexcept
+void PrintPopularWords(std::map<std::string, unsigned int>& map, const size_t wordsCount) noexcept
 {
 	const std::set<std::pair<std::string, int>, Comparator> setOfWords(map.begin(), map.end(), compFunctor);
 
@@ -137,7 +139,7 @@ void PrintPopularWords(std::map<std::string, unsigned int>& map, const unsigned 
 	}
 }
 
-int FindMostPopularWords(const std::wstring& filename, const int threadCount, const int wordsCount) noexcept
+int FindMostPopularWords(const std::wstring& filename, const size_t threadCount, const size_t wordsCount) noexcept
 {
 	std::unique_ptr<StringReader> sr;
 	try
@@ -161,14 +163,14 @@ int FindMostPopularWords(const std::wstring& filename, const int threadCount, co
 
 	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
-	for (int i = 0; i < threadCount; ++i)
+	for (size_t i = 0; i < threadCount; ++i)
 	{
-		HANDLE hTmpThread = CreateThread(nullptr,
+		HANDLE hTmpThread = reinterpret_cast<HANDLE>(_beginthreadex(nullptr,
 			0,
 			StringProcessingThread,
 			&threadParam,
 			0,
-			nullptr);
+			nullptr));
 		if (hTmpThread == nullptr)
 		{
 			std::cout << "Thread " << i << " failed to start" << std::endl;
@@ -188,7 +190,7 @@ int FindMostPopularWords(const std::wstring& filename, const int threadCount, co
  
 int main(int argc, char** argv)
 {
-	int threadCount = 6;
+	size_t threadCount = 6;
 	/*std::cout << "Welcome! Please insert thread count:" << std::endl;
 	std::cin >> threadCount;
 	if (threadCount == 0 || threadCount > MAXIMUM_WAIT_OBJECTS)
